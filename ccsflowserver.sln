@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34031.279
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ccsflowserver", "ccsflowserver.csproj", "{225D0EB4-6354-492D-BA18-C01AB57EC6D6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MdToHtml", "..\MdToHtml\MdToHtml.csproj", "{6F1B3703-D9F1-46B1-8EB3-F22238E83F0C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MdToHtmlTests", "..\MdToHtmlTests\MdToHtmlTests.csproj", "{A83DF92F-199F-48CB-8A00-09CA938B84CC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{225D0EB4-6354-492D-BA18-C01AB57EC6D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{225D0EB4-6354-492D-BA18-C01AB57EC6D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{225D0EB4-6354-492D-BA18-C01AB57EC6D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{225D0EB4-6354-492D-BA18-C01AB57EC6D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F1B3703-D9F1-46B1-8EB3-F22238E83F0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F1B3703-D9F1-46B1-8EB3-F22238E83F0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F1B3703-D9F1-46B1-8EB3-F22238E83F0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F1B3703-D9F1-46B1-8EB3-F22238E83F0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A83DF92F-199F-48CB-8A00-09CA938B84CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A83DF92F-199F-48CB-8A00-09CA938B84CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A83DF92F-199F-48CB-8A00-09CA938B84CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {70ABD3DD-6338-4031-819C-00494005F443}
+	EndGlobalSection
+EndGlobal
