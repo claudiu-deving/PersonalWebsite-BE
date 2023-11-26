@@ -80,6 +80,7 @@ public class BlogPostsController : ControllerBase
 
     // POST api/<BlogPostsController>
     [HttpPost]
+    [Authorize(Roles = "Admin,Author")]
     public async Task<ActionResult> Post([FromBody] BlogPost blogPost)
     {
         if(blogPost==null)
@@ -107,6 +108,8 @@ public class BlogPostsController : ControllerBase
 
     // PUT api/<BlogPostsController>/5
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin,Author")]
+
     public async Task<ActionResult> Put(int id, [FromBody] BlogPostUpdate blogPost)
     {
         var existing = await _blogpostsService.Get(id);
@@ -128,6 +131,8 @@ public class BlogPostsController : ControllerBase
 
     // DELETE api/<BlogPostsController>/5
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin,Author")]
+
     public async Task<ActionResult> Delete(int id)
     {
         var existing = await _blogpostsService.Get(id);

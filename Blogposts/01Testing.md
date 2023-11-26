@@ -35,6 +35,6 @@ public static class Program
 }
 </code>
 
-<3Image3>[Image](Dalle_01.png)
+<3Image3>(Dalle_01.png)
 
 .

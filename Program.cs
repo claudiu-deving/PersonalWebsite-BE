@@ -1,4 +1,3 @@
-using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -6,21 +5,17 @@ using ccsflowserver.Data;
 using ccsflowserver.Model;
 using ccsflowserver.Services;
 
-using MdToHtml;
+using Humanizer.Localisation;
 
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 
-string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
+var connectionString = BuildConnectionString(builder);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -30,7 +25,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseNpgsql(connectionString);
 });
-
 builder.Services.AddScoped<IPasswordManager>(x => new PasswordManager());
 builder.Services.AddScoped<IAuthservice>(IAuthservice => new AuthService(IAuthservice.GetRequiredService<AppDbContext>(), IAuthservice.GetRequiredService<IPasswordManager>()));
 builder.Services.AddScoped<IModelService<BlogPost>>(IModelService => new BlogPostService(IModelService.GetRequiredService<AppDbContext>()));
@@ -90,8 +84,35 @@ app.MapControllers();
 
 
 app.Run();
-partial class Program
+
+static string BuildConnectionString(WebApplicationBuilder builder)
 {
-    [GeneratedRegex("([a-z A-Z 1-9-_]*)\\.md")]
-    private static partial Regex MyRegex();
+    const string _databaseHost = "DATABASE_HOST_PW";
+    const string _databaseName = "DATABASE_PW";
+    const string _databaseUser = "DATABASE_USER_PW";
+    const string _databasePassword = "DATABASE_PASS_PW";
+
+    List<string> strings = new List<string>
+{
+    _databaseHost,
+    _databaseName,
+    _databaseUser,
+    _databasePassword
+};
+    string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
+
+    foreach(var str in strings)
+    {
+        var env = Environment.GetEnvironmentVariable(str);
+        if(env is null)
+        {
+            throw new Exception($"Environment variable {str} is not set");
+        }
+        else
+        {
+            connectionString=connectionString.Replace($"[{str}]", env);
+        }
+    }
+
+    return connectionString;
 }
