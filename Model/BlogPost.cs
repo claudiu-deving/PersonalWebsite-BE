@@ -10,8 +10,9 @@ public class BlogPost : IEntity
     public string? Title { get; set; }
     public string Content { get; set; } = string.Empty;
     public DateTime Created { get; set; }
-    object IEntity.Id { get => Id; set => Id=(int)value; }
+    object IEntity.Id { get => Id; }
     public DateTime Modified { get; set; }
+    public User? Author { get; set; }
     public BlogPost(int id, string title, string content, DateTime created, DateTime modified)
     {
         Id=id;

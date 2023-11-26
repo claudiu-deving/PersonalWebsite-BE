@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ccsflowserver.Data;
@@ -11,9 +12,11 @@ using ccsflowserver.Data;
 namespace ccsflowserver.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231126155122_AddedRoleToUser")]
+    partial class AddedRoleToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,9 +33,6 @@ namespace ccsflowserver.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<Guid?>("AuthorId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
@@ -47,8 +47,6 @@ namespace ccsflowserver.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AuthorId");
 
                     b.ToTable("BlogPosts");
                 });
@@ -75,6 +73,22 @@ namespace ccsflowserver.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = -1,
+                            Description = "Default role for new users",
+                            IsAdmin = false,
+                            Name = "Default"
+                        },
+                        new
+                        {
+                            Id = -2,
+                            Description = "Administrator",
+                            IsAdmin = true,
+                            Name = "Admin"
+                        });
                 });
 
             modelBuilder.Entity("ccsflowserver.Model.User", b =>
@@ -107,15 +121,6 @@ namespace ccsflowserver.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("ccsflowserver.Model.BlogPost", b =>
-                {
-                    b.HasOne("ccsflowserver.Model.User", "Author")
-                        .WithMany()
-                        .HasForeignKey("AuthorId");
-
-                    b.Navigation("Author");
                 });
 
             modelBuilder.Entity("ccsflowserver.Model.User", b =>

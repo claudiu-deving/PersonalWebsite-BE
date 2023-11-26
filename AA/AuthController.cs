@@ -1,4 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 
 using ccsflowserver.Model;
@@ -15,19 +16,18 @@ public class AuthController : ControllerBase
 {
     private readonly IConfiguration _configuration;
     private readonly IAuthservice _authService;
+    private readonly IModelService<User> _userService;
 
-    public AuthController(IConfiguration configuration, IAuthservice authService)
+    public AuthController(IConfiguration configuration, IAuthservice authService, IModelService<User> userService)
     {
         _configuration=configuration;
         _authService=authService;
+        _userService=userService;
     }
 
     [HttpPost("token")]
-    public async Task<IActionResult> GenerateToken(UserPayload user)
+    public async Task<IActionResult> GenerateToken(UserPayloadVerification user)
     {
-        // Validate the user credentials
-        // For demo purposes, we are assuming the user is authenticated.
-        // In a real scenario, you should verify the username and password against a database or another service.
 
         if(!await _authService.Verify(user.Username, user.Password))
         {
@@ -52,7 +52,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> RegisterUser(UserPayload user)
+    public async Task<IActionResult> RegisterUser(UserPayloadRegistration user)
     {
         if(string.IsNullOrEmpty(user.Username)||string.IsNullOrEmpty(user.Password))
             return BadRequest("Username or password is missing");
@@ -62,7 +62,7 @@ public class AuthController : ControllerBase
             return BadRequest("Username already exists");
         }
 
-        var userResponse = await _authService.RegisterUser(user.Username, user.Password);
+        var userResponse = await _authService.RegisterUser(user);
 
         return Ok(userResponse);
     }
