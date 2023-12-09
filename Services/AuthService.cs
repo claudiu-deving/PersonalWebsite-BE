@@ -18,7 +18,7 @@ public class AuthService : IAuthservice
 
     public async Task<bool> UserExists(string username)
     {
-        var dbUserName = await _appDbContext.Logins.FirstOrDefaultAsync(u => u.Username==username);
+        var dbUserName = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Username==username);
         if(dbUserName is null)
         {
             return false;
@@ -32,7 +32,7 @@ public class AuthService : IAuthservice
 
     public async Task<bool> Verify(string username, string password)
     {
-        var dbUserName = await _appDbContext.Logins.FirstOrDefaultAsync(u => u.Username==username);
+        var dbUserName = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Username==username);
 
         if(dbUserName is null)
         {
@@ -40,22 +40,24 @@ public class AuthService : IAuthservice
         }
         var passwordHash = _passwordManager.HashPassword(password, dbUserName.PassSalt);
 
-        var result =Convert.ToBase64String( dbUserName.PassHash).Equals(Convert.ToBase64String(passwordHash));
+        var result = Convert.ToBase64String(dbUserName.PassHash).Equals(Convert.ToBase64String(passwordHash));
 
         return result;
     }
 
-    public async Task<User> RegisterUser(string username, string password)
+    public async Task<User> RegisterUser(UserPayloadRegistration user)
     {
-        var hashedDetails = _passwordManager.HashNewPassword(password);
+        var hashedDetails = _passwordManager.HashNewPassword(user.Password);
         User login = new User()
         {
-            Username=username,
+            Username=user.Username,
             PassHash=hashedDetails.hash,
             PassSalt=hashedDetails.salt,
-            Id=Guid.NewGuid()
+            Email=user.Email,
+            Id=Guid.NewGuid(),
+            Role=Role.Default
         };
-        await _appDbContext.Logins.AddAsync(login);
+        await _appDbContext.Users.AddAsync(login);
         await _appDbContext.SaveChangesAsync();
         return login;
     }

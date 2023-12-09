@@ -1,8 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using MdToHtml;
 
-using MdToHtml;
-
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using Newtonsoft.Json;

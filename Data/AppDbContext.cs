@@ -11,7 +11,14 @@ public class AppDbContext : DbContext
 
     }
 
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+    }
 
-    public DbSet<User> Logins { get; set; }
+
+
+    public DbSet<User> Users { get; set; }
+    public DbSet<Role> Roles { get; set; }
     public DbSet<BlogPost> BlogPosts { get; set; }
 }

@@ -1,11 +1,8 @@
 using System.Text;
-using System.Text.RegularExpressions;
 
 using ccsflowserver.Data;
 using ccsflowserver.Model;
 using ccsflowserver.Services;
-
-using Humanizer.Localisation;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -28,6 +25,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IPasswordManager>(x => new PasswordManager());
 builder.Services.AddScoped<IAuthservice>(IAuthservice => new AuthService(IAuthservice.GetRequiredService<AppDbContext>(), IAuthservice.GetRequiredService<IPasswordManager>()));
 builder.Services.AddScoped<IModelService<BlogPost>>(IModelService => new BlogPostService(IModelService.GetRequiredService<AppDbContext>()));
+builder.Services.AddScoped<IModelService<User>>(IModelService => new UserService(IModelService.GetRequiredService<AppDbContext>()));
 
 builder.Services.AddControllers();
 

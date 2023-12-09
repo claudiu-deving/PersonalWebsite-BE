@@ -16,11 +16,15 @@ namespace ccsflowserver.Controllers;
 public class BlogPostsController : ControllerBase
 {
     private readonly IModelService<BlogPost> _blogpostsService;
+    private readonly IAuthservice _authservice;
+    private readonly IModelService<User> _userService;
     private readonly IMapper _autoMapper;
 
-    public BlogPostsController(IModelService<BlogPost> blogpostsService)
+    public BlogPostsController(IModelService<BlogPost> blogpostsService, IAuthservice authservice, IModelService<User> userService)
     {
         _blogpostsService=blogpostsService;
+        _authservice=authservice;
+        _userService=userService;
         _autoMapper=new AutoMapper.MapperConfiguration(cfg =>
         {
             cfg.CreateMap<BlogPostUpdate, BlogPost>()
@@ -35,7 +39,7 @@ public class BlogPostsController : ControllerBase
 
     // GET: api/<BlogPostsController>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<BlogPost>>> Get()
+    public async Task<ActionResult<IEnumerable<BlogPostUpdate>>> Get()
     {
         var data = await _blogpostsService.Get();
         if(data.Success&&data.Data is not null)
@@ -80,9 +84,19 @@ public class BlogPostsController : ControllerBase
 
     // POST api/<BlogPostsController>
     [HttpPost]
-    [Authorize(Roles = "Admin,Author")]
-    public async Task<ActionResult> Post([FromBody] BlogPost blogPost)
+    public async Task<ActionResult> Post([FromBody] BlogPost blogPost, string userName)
     {
+        if(_authservice.UserExists(userName).Result==false)
+        {
+            return Unauthorized();
+        }
+
+        if(blogPost.Author is null||!blogPost.Author.Username.Equals(userName))
+        {
+            return Unauthorized();
+        }
+
+
         if(blogPost==null)
         {
             return BadRequest("The object cannot be null");
@@ -108,8 +122,6 @@ public class BlogPostsController : ControllerBase
 
     // PUT api/<BlogPostsController>/5
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,Author")]
-
     public async Task<ActionResult> Put(int id, [FromBody] BlogPostUpdate blogPost)
     {
         var existing = await _blogpostsService.Get(id);
@@ -131,8 +143,6 @@ public class BlogPostsController : ControllerBase
 
     // DELETE api/<BlogPostsController>/5
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin,Author")]
-
     public async Task<ActionResult> Delete(int id)
     {
         var existing = await _blogpostsService.Get(id);
