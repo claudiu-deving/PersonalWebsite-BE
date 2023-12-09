@@ -44,7 +44,19 @@ public class BlogPostsController : ControllerBase
         var data = await _blogpostsService.Get();
         if(data.Success&&data.Data is not null)
         {
-            return Ok(data.Data);
+            var mapped = data.Data.Select(x => new BlogPostUpdate()
+            {
+                Title=x.Title,
+                Content=x.Content,
+                Created=x.Created,
+                Modified=x.Modified,
+                Author=new UserPayloadName()
+                {
+                    Username=x.Author.Username??string.Empty
+                }
+            });
+
+            return Ok(mapped);
         }
         else
         {
@@ -122,9 +134,10 @@ public class BlogPostsController : ControllerBase
 
     // PUT api/<BlogPostsController>/5
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<ActionResult> Put(int id, [FromBody] BlogPostUpdate blogPost)
     {
-        var existing = await _blogpostsService.Get(id);
+        var existing = await _blogpostsService.Get(id, false);
         if(existing.Success)
         {
             _autoMapper.Map(blogPost, existing.Data);

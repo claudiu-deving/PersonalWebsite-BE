@@ -2,7 +2,7 @@
 
 namespace ccsflowserver.Model;
 
-public class User:IEntity
+public class User : IEntity
 {
     public Guid Id { get; set; }
     public string Username { get; set; } = string.Empty;
@@ -11,4 +11,7 @@ public class User:IEntity
     public string Email { get; set; } = string.Empty;
     public Role? Role { get; set; }
     object IEntity.Id { get => Id; }
+
+    public virtual ICollection<BlogPost> BlogPosts { get; set; }
 }
+

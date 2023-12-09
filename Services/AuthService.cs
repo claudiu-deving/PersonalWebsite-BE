@@ -55,11 +55,22 @@ public class AuthService : IAuthservice
             PassSalt=hashedDetails.salt,
             Email=user.Email,
             Id=Guid.NewGuid(),
-            Role=Role.Default
+            Role=_appDbContext.Roles.FirstOrDefault(x => x.Name=="Author")
         };
         await _appDbContext.Users.AddAsync(login);
         await _appDbContext.SaveChangesAsync();
         return login;
     }
 
+    public Task<bool> EmailExists(string email)
+    {
+        if(_appDbContext.Users.Any(u => u.Email==email))
+        {
+            return Task.FromResult(true);
+        }
+        else
+        {
+            return Task.FromResult(false);
+        }
+    }
 }

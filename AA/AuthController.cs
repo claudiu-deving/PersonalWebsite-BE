@@ -62,6 +62,11 @@ public class AuthController : ControllerBase
             return BadRequest("Username already exists");
         }
 
+        if(await _authService.EmailExists(user.Email))
+        {
+            return BadRequest("Email already exists");
+        }
+
         var userResponse = await _authService.RegisterUser(user);
 
         return Ok(userResponse);

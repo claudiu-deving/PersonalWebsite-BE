@@ -12,7 +12,8 @@ public class BlogPost : IEntity
     public DateTime Created { get; set; }
     object IEntity.Id { get => Id; }
     public DateTime Modified { get; set; }
-    public User? Author { get; set; }
+    public Guid AuthorId { get; set; }
+    public virtual User Author { get; set; }
     public BlogPost(int id, string title, string content, DateTime created, DateTime modified)
     {
         Id=id;

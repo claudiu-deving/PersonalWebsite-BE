@@ -112,15 +112,7 @@ public class BlogPostService : IModelService<BlogPost>
         }
         else
         {
-            if(parse)
-            {
-                data.Content=string.Join(Environment.NewLine, Parser.Process(UnescapeString(data.Content)));
-
-            }
-            else
-            {
-                data.Content=string.Join(Environment.NewLine, data.Content);
-            }
+            data.Content=string.Join(Environment.NewLine, data.Content);
             response.Success=true;
             response.Message=$"Blog post with Id: {id} found";
             response.Data=data;
@@ -136,6 +128,11 @@ public class BlogPostService : IModelService<BlogPost>
     {
         var response = new ServiceResponse<IEnumerable<BlogPost>>();
         var data = await _appDbContext.BlogPosts.ToListAsync();
+        data.ForEach(blog =>
+        {
+            _appDbContext.Entry(blog).Reference(b => b.Author).Load();
+
+        });
         if(data is null)
         {
             response.Success=false;
