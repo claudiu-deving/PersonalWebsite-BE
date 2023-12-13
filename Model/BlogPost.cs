@@ -14,6 +14,9 @@ public class BlogPost : IEntity
     public DateTime Modified { get; set; }
     public Guid AuthorId { get; set; }
     public virtual User Author { get; set; }
+
+    public bool IsApproved { get; set; }
+
     public BlogPost()
     {
 

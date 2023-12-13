@@ -21,6 +21,7 @@ public class BlogPostUpdate
     public DateTime? Created { get; set; }
     public DateTime? Modified { get; set; }
     public UserPayload? Author { get; set; }
+    public bool IsApproved { get; set; }
 }
 
 public class BlogPostCreate

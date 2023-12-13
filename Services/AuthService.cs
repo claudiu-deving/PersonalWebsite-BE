@@ -61,6 +61,16 @@ public class AuthService : IAuthservice
     public async Task<User> RegisterUser(UserPayloadRegistration user)
     {
         var hashedDetails = _passwordManager.HashNewPassword(user.Password);
+        var authorRole = _appDbContext.Roles.FirstOrDefault(x => x.Name=="Author");
+        if(authorRole is null)
+        {
+            authorRole=new Role()
+            {
+                Id=0,
+                Name="Author",
+                IsAdmin=false
+            };
+        }
         User login = new User()
         {
             Username=user.Username,
@@ -68,7 +78,8 @@ public class AuthService : IAuthservice
             PassSalt=hashedDetails.salt,
             Email=user.Email,
             Id=Guid.NewGuid(),
-            Role=_appDbContext.Roles.FirstOrDefault(x => x.Name=="Author")
+            Role=authorRole,
+            RoleId=authorRole.Id
         };
         await _appDbContext.Users.AddAsync(login);
         await _appDbContext.SaveChangesAsync();

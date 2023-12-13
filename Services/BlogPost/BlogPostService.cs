@@ -120,18 +120,20 @@ public class BlogPostService : IModelService<BlogPost>
         return response;
     }
 
-    private static string UnescapeString(string escapedString)
-    {
-        return Regex.Unescape(escapedString);
-    }
     public async Task<ServiceResponse<IEnumerable<BlogPost>>> Get()
     {
         var response = new ServiceResponse<IEnumerable<BlogPost>>();
         var data = await _appDbContext.BlogPosts.ToListAsync();
+        var users = await _appDbContext.Users.ToListAsync();
+
         data.ForEach(blog =>
         {
             _appDbContext.Entry(blog).Reference(b => b.Author).Load();
-
+            var author = users.FirstOrDefault(u => u.Id==blog.AuthorId);
+            if(author!=null)
+            {
+                blog.Author=author;
+            }
         });
         if(data is null)
         {

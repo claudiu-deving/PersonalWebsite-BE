@@ -8,3 +8,4 @@ public interface IModelService<T> where T : IEntity
     Task<ServiceResponse<T>> Get(object id, bool parse = true);
     Task<ServiceResponse<IEnumerable<T>>> Get();
 }
+
