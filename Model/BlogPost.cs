@@ -14,13 +14,17 @@ public class BlogPost : IEntity
     public DateTime Modified { get; set; }
     public Guid AuthorId { get; set; }
     public virtual User Author { get; set; }
-    public BlogPost(int id, string title, string content, DateTime created, DateTime modified)
+    public BlogPost()
     {
-        Id=id;
+
+    }
+    public BlogPost(string title, string content, User author)
+    {
         Title=title;
         Content=content;
-        Created=created;
-        Modified=modified;
+        Created=DateTime.Now.ToUniversalTime();
+        Modified=DateTime.Now.ToUniversalTime();
+        AuthorId=author.Id;
     }
 
 }

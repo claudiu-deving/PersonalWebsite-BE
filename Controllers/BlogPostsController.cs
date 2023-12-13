@@ -18,22 +18,13 @@ public class BlogPostsController : ControllerBase
     private readonly IModelService<BlogPost> _blogpostsService;
     private readonly IAuthservice _authservice;
     private readonly IModelService<User> _userService;
-    private readonly IMapper _autoMapper;
+
 
     public BlogPostsController(IModelService<BlogPost> blogpostsService, IAuthservice authservice, IModelService<User> userService)
     {
         _blogpostsService=blogpostsService;
         _authservice=authservice;
         _userService=userService;
-        _autoMapper=new AutoMapper.MapperConfiguration(cfg =>
-        {
-            cfg.CreateMap<BlogPostUpdate, BlogPost>()
-               .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember, context) =>
-               {
-                   // Check if the source member is null
-                   return srcMember!=null;
-               }));
-        }).CreateMapper();
 
     }
 
@@ -46,13 +37,15 @@ public class BlogPostsController : ControllerBase
         {
             var mapped = data.Data.Select(x => new BlogPostUpdate()
             {
+                Id=x.Id,
                 Title=x.Title,
                 Content=x.Content,
                 Created=x.Created,
                 Modified=x.Modified,
-                Author=new UserPayloadName()
+                Author=new UserPayload()
                 {
-                    Username=x.Author.Username??string.Empty
+                    Id=x.Author.Id,
+                    Username=x.Author.Username,
                 }
             });
 
@@ -96,31 +89,44 @@ public class BlogPostsController : ControllerBase
 
     // POST api/<BlogPostsController>
     [HttpPost]
-    public async Task<ActionResult> Post([FromBody] BlogPost blogPost, string userName)
+    [Authorize]
+    public async Task<ActionResult> Post([FromBody] BlogPostCreate requestBlogPost)
     {
-        if(_authservice.UserExists(userName).Result==false)
+        var guid = new Guid(requestBlogPost.UserId);
+        if(_authservice.UserExists(guid).Result==false)
         {
             return Unauthorized();
         }
 
-        if(blogPost.Author is null||!blogPost.Author.Username.Equals(userName))
+        if(guid==Guid.Empty)
         {
             return Unauthorized();
         }
-
-
-        if(blogPost==null)
+        if(requestBlogPost==null)
         {
             return BadRequest("The object cannot be null");
         }
-        if(string.IsNullOrEmpty(blogPost.Title))
+        if(string.IsNullOrEmpty(requestBlogPost.Title))
         {
             return BadRequest("Title is required");
         }
-        if(string.IsNullOrEmpty(blogPost.Content))
+        if(string.IsNullOrEmpty(requestBlogPost.Content))
         {
             return BadRequest("Content is required");
         }
+        var response = await _userService.Get(guid);
+        if(!response.Success)
+        {
+            return NotFound(response.Message);
+        }
+        if(response.Data is null)
+        {
+            return NotFound(response.Message);
+        }
+        var author = response.Data;
+        BlogPost blogPost = new BlogPost(requestBlogPost.Title, requestBlogPost.Content, author);
+
+
         var data = await _blogpostsService.Create(blogPost);
         if(data.Success)
         {
@@ -140,8 +146,15 @@ public class BlogPostsController : ControllerBase
         var existing = await _blogpostsService.Get(id, false);
         if(existing.Success)
         {
-            _autoMapper.Map(blogPost, existing.Data);
+            existing.Data.Content=blogPost.Content;
+            existing.Data.Title=blogPost.Title;
+            existing.Data.Modified=DateTime.Now.ToUniversalTime();
         }
+        else
+        {
+            return NotFound(existing.Message);
+        }
+
         var data = await _blogpostsService.Update(existing.Data);
         if(data.Success)
         {

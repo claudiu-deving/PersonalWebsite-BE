@@ -18,3 +18,10 @@ public class UserPayloadName
 {
     public string Username { get; set; } = string.Empty;
 }
+
+public class UserPayload
+{
+    public Guid Id { get; set; }
+    public string Username { get; set; } = string.Empty;
+
+}

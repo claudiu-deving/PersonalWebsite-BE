@@ -25,11 +25,31 @@ public class AuthController : ControllerBase
         _userService=userService;
     }
 
+    [HttpGet("{username}")]
+    public async Task<IActionResult> Get(string username)
+    {
+        var data = await _userService.Get();
+        if(data.Success&&data.Data is not null)
+        {
+            var user = data.Data.FirstOrDefault(x => x.Username.Equals(username));
+            if(user is null)
+            {
+                return NotFound("User not found");
+            }
+            return Ok(user.Id);
+        }
+        else
+        {
+            return NotFound(data.Message);
+        }
+    }
+
+
     [HttpPost("token")]
     public async Task<IActionResult> GenerateToken(UserPayloadVerification user)
     {
-
-        if(!await _authService.Verify(user.Username, user.Password))
+        var dbUser = await _authService.Verify(user.Username, user.Password);
+        if(dbUser is null)
         {
             return Unauthorized();
         }
@@ -47,7 +67,8 @@ public class AuthController : ControllerBase
         return Ok(new
         {
             token = new JwtSecurityTokenHandler().WriteToken(token),
-            expiration = token.ValidTo
+            expiration = token.ValidTo,
+            userId = dbUser.Id
         });
     }
 
