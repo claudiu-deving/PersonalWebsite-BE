@@ -16,9 +16,22 @@ public class AuthService : IAuthservice
         _passwordManager=passwordManager;
     }
 
+    public async Task<bool> UserExists(Guid id)
+    {
+        var dbUserName = await _appDbContext.Users.FindAsync(id);
+        if(dbUserName is null)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
     public async Task<bool> UserExists(string username)
     {
-        var dbUserName = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Username==username);
+        var dbUserName = await _appDbContext.Users.FirstOrDefaultAsync(x => x.Username.Equals(username));
         if(dbUserName is null)
         {
             return false;
@@ -30,19 +43,19 @@ public class AuthService : IAuthservice
     }
 
 
-    public async Task<bool> Verify(string username, string password)
+    public async Task<User?> Verify(string username, string password)
     {
         var dbUserName = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Username==username);
 
         if(dbUserName is null)
         {
-            return false;
+            return null;
         }
         var passwordHash = _passwordManager.HashPassword(password, dbUserName.PassSalt);
 
         var result = Convert.ToBase64String(dbUserName.PassHash).Equals(Convert.ToBase64String(passwordHash));
 
-        return result;
+        return dbUserName;
     }
 
     public async Task<User> RegisterUser(UserPayloadRegistration user)

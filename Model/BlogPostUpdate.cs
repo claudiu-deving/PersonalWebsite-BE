@@ -7,6 +7,7 @@ namespace ccsflowserver.Model;
 /// </summary>
 public class BlogPostUpdate
 {
+    public int Id { get; set; }
     /// <summary>
     /// Title of the blog
     /// </summary>
@@ -17,7 +18,24 @@ public class BlogPostUpdate
     /// </summary>
     public string? Content { get; set; }
 
-    public DateTime Created { get; set; }
-    public DateTime Modified { get; set; }
-    public UserPayloadName? Author { get; set; }
+    public DateTime? Created { get; set; }
+    public DateTime? Modified { get; set; }
+    public UserPayload? Author { get; set; }
 }
+
+public class BlogPostCreate
+{
+    /// <summary>
+    /// Title of the blog
+    /// </summary>
+    public required string Title { get; set; }
+
+    /// <summary>
+    /// Specially formatted content
+    /// </summary>
+    public required string Content { get; set; }
+    public required string UserId { get; set; }
+}
+
+
+
