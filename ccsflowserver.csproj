@@ -26,10 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MdToHtml\MdToHtml.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="bin\Debug\net7.0\" />
     <Folder Include="bin\Release\net7.0\" />
   </ItemGroup>
