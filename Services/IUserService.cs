@@ -1,4 +1,6 @@
-﻿using ccsflowserver.Data;
+﻿using System.Reflection.Metadata;
+
+using ccsflowserver.Data;
 using ccsflowserver.Model;
 
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +41,7 @@ public class UserService : IModelService<User>
     {
         ServiceResponse<User> serviceResponse = new ServiceResponse<User>();
         var user = await _dbContext.Users.FindAsync(id);
+
         if(user is null)
         {
             serviceResponse.Success=false;
@@ -47,6 +50,7 @@ public class UserService : IModelService<User>
         }
         else
         {
+            _dbContext.Entry(user).Reference(b => b.Role).Load();
             serviceResponse.Success=true;
             serviceResponse.Message="User found!";
             serviceResponse.Data=user;
@@ -58,6 +62,10 @@ public class UserService : IModelService<User>
     {
         ServiceResponse<IEnumerable<User>> serviceResponse = new ServiceResponse<IEnumerable<User>>();
         var users = await _dbContext.Users.ToListAsync();
+        foreach(var user in users)
+        {
+            _dbContext.Entry(user).Reference(b => b.Role).Load();
+        }
         if(users is null)
         {
             serviceResponse.Success=false;

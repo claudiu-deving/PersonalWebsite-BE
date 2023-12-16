@@ -9,7 +9,9 @@ public class User : IEntity
     public required byte[] PassHash { get; set; }
     public required byte[] PassSalt { get; set; }
     public string Email { get; set; } = string.Empty;
-    public Role? Role { get; set; }
+    public int RoleId { get; set; }
+    public virtual Role Role { get; set; }
     object IEntity.Id { get => Id; }
+
 }
 

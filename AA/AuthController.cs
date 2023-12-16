@@ -25,6 +25,28 @@ public class AuthController : ControllerBase
         _userService=userService;
     }
 
+
+    [HttpGet("admin/{username}")]
+    public async Task<IActionResult> IsAdmin(string username)
+    {
+        var data = await _userService.Get();
+        if(data.Success&&data.Data is not null)
+        {
+            var user = data.Data.FirstOrDefault(x => x.Username.Equals(username));
+            if(user is null)
+            {
+                return NotFound("User not found");
+            }
+            return Ok(user.Role.IsAdmin);
+        }
+        else
+        {
+            return NotFound(data.Message);
+        }
+    }
+
+
+
     [HttpGet("{username}")]
     public async Task<IActionResult> Get(string username)
     {

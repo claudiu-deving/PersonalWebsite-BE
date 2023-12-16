@@ -33,23 +33,31 @@ public class BlogPostsController : ControllerBase
     public async Task<ActionResult<IEnumerable<BlogPostUpdate>>> Get()
     {
         var data = await _blogpostsService.Get();
+        var roles = await _userService.Get();
+        List<BlogPostUpdate> blogs = new();
         if(data.Success&&data.Data is not null)
         {
-            var mapped = data.Data.Select(x => new BlogPostUpdate()
+            foreach(var blog in data.Data)
             {
-                Id=x.Id,
-                Title=x.Title,
-                Content=x.Content,
-                Created=x.Created,
-                Modified=x.Modified,
-                Author=new UserPayload()
-                {
-                    Id=x.Author.Id,
-                    Username=x.Author.Username,
-                }
-            });
 
-            return Ok(mapped);
+                blogs.Add(new BlogPostUpdate()
+                {
+                    Id=blog.Id,
+                    Title=blog.Title,
+                    Content=blog.Content,
+                    Created=blog.Created,
+                    Modified=blog.Modified,
+                    IsApproved=blog.IsApproved,
+                    Author=new UserPayload()
+                    {
+                        Id=blog.Author.Id,
+                        Username=blog.Author.Username,
+                        IsAdmin=blog.Author.Role.IsAdmin
+                    }
+                });
+
+            }
+            return Ok(blogs);
         }
         else
         {
@@ -136,6 +144,34 @@ public class BlogPostsController : ControllerBase
         {
             return BadRequest(data.Message);
         }
+    }
+
+
+    // PUT api/<BlogPostsController>/5
+    [HttpPut("approve/{id}")]
+    [Authorize]
+    public async Task<ActionResult> SetApproval(int id, [FromBody] bool approved)
+    {
+        var existing = await _blogpostsService.Get(id, false);
+        if(existing.Success&&existing.Data is not null)
+        {
+            existing.Data.IsApproved=approved;
+        }
+        else
+        {
+            return NotFound(existing.Message);
+        }
+
+        var data = await _blogpostsService.Update(existing.Data);
+        if(data.Success)
+        {
+            return Ok();
+        }
+        else
+        {
+            return NotFound(data.Message);
+        }
+
     }
 
     // PUT api/<BlogPostsController>/5
