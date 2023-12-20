@@ -79,20 +79,6 @@ public class BlogPostsController : ControllerBase
             return NotFound(data.Message);
         }
     }
-    // GET api/<BlogPostsController>/5
-    [HttpGet("unparsed/{id}")]
-    public async Task<ActionResult<BlogPost>> GetUnparsed(int id)
-    {
-        var data = await _blogpostsService.Get(id, false);
-        if(data.Success&&data.Data is not null)
-        {
-            return Ok(data.Data);
-        }
-        else
-        {
-            return NotFound(data.Message);
-        }
-    }
 
 
     // POST api/<BlogPostsController>
@@ -136,9 +122,24 @@ public class BlogPostsController : ControllerBase
 
 
         var data = await _blogpostsService.Create(blogPost);
+
+        var responseBlogPost = new BlogPostUpdate()
+        {
+            Title=data.Data.Title,
+            Content=data.Data.Content,
+            Author=new UserPayload()
+            {
+                Username=data.Data.Author.Username,
+                Id=data.Data.Author.Id,
+                IsAdmin=data.Data.Author.Role.IsAdmin
+            },
+            Id=data.Data.Id,
+
+
+        };
         if(data.Success)
         {
-            return Ok(data.Data);
+            return Ok(responseBlogPost);
         }
         else
         {
@@ -188,7 +189,13 @@ public class BlogPostsController : ControllerBase
         }
         else
         {
-            return NotFound(existing.Message);
+            var author = await _userService.Get(blogPost.Author.Id);
+            if(!author.Success)
+            {
+                return NotFound(author.Message);
+            }
+            var blogPostNew = new BlogPost(blogPost.Title, blogPost.Content, author.Data);
+            _blogpostsService.Create(blogPostNew);
         }
 
         var data = await _blogpostsService.Update(existing.Data);
@@ -215,7 +222,7 @@ public class BlogPostsController : ControllerBase
         }
         else
         {
-            return NotFound($"Blog post with Id {id} was not found");
+            return Ok();
         }
     }
 }

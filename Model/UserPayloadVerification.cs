@@ -4,6 +4,7 @@ public class UserPayloadVerification
 {
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+    public DateTime? LastTry { get; set; }
 }
 
 public class UserPayloadRegistration
