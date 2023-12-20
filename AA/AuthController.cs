@@ -70,6 +70,10 @@ public class AuthController : ControllerBase
     [HttpPost("token")]
     public async Task<IActionResult> GenerateToken(UserPayloadVerification user)
     {
+        if(UserExceedesRetriesLimit(user))
+        {
+            return Forbid();
+        }
         var dbUser = await _authService.Verify(user.Username, user.Password);
         if(dbUser is null)
         {
@@ -92,6 +96,39 @@ public class AuthController : ControllerBase
             expiration = token.ValidTo,
             userId = dbUser.Id
         });
+    }
+
+    private static Dictionary<string, List<DateTime>> _lastTry = new Dictionary<string, List<DateTime>>();
+    private bool UserExceedesRetriesLimit(UserPayloadVerification user)
+    {
+        var valueRetrieved = _lastTry.TryGetValue(user.Username, out var listOfDates);
+
+        if(valueRetrieved)
+        {
+            listOfDates!.Add(DateTime.Now);
+
+            listOfDates.Sort();
+
+            if(listOfDates.Count==5)
+            {
+                if((listOfDates[0]-listOfDates[listOfDates.Count-1]).Duration()<TimeSpan.FromMinutes(5).Duration())
+                {
+                    Console.WriteLine($"User {user.Username} tried to login more than 5 times");
+                    listOfDates.RemoveAt(0);
+                    return true;
+                }
+                listOfDates.RemoveAt(0);
+            }
+
+            _lastTry[user.Username]=listOfDates;
+            return false;
+        }
+        else
+        {
+            listOfDates=new List<DateTime>();
+            _lastTry[user.Username]=listOfDates;
+            return false;
+        }
     }
 
     [HttpPost("register")]
