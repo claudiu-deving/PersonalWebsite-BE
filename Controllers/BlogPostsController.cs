@@ -1,10 +1,12 @@
-﻿using System.Threading.Tasks;
+﻿using System.Security.Claims;
+using System.Threading.Tasks;
 
 using AutoMapper;
 
 using ccsflowserver.Model;
 using ccsflowserver.Services;
 
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,14 +20,18 @@ public class BlogPostsController : ControllerBase
     private readonly IModelService<BlogPost> _blogpostsService;
     private readonly IAuthservice _authservice;
     private readonly IModelService<User> _userService;
+    private readonly IClaimsTranslator _claimsTransformation;
 
-
-    public BlogPostsController(IModelService<BlogPost> blogpostsService, IAuthservice authservice, IModelService<User> userService)
+    public BlogPostsController(
+        IModelService<BlogPost> blogpostsService,
+        IAuthservice authservice,
+        IModelService<User> userService,
+        IClaimsTranslator claimsTransformation)
     {
         _blogpostsService=blogpostsService;
         _authservice=authservice;
         _userService=userService;
-
+        _claimsTransformation=claimsTransformation;
     }
 
     // GET: api/<BlogPostsController>
@@ -69,10 +75,27 @@ public class BlogPostsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<BlogPost>> Get(int id)
     {
+
         var data = await _blogpostsService.Get(id);
-        if(data.Success&&data.Data is not null)
+
+
+        if(data.Success&&data.Data is BlogPost blog)
         {
-            return Ok(data.Data);
+            return Ok(new BlogPostUpdate()
+            {
+                Id=blog.Id,
+                Title=blog.Title,
+                Content=blog.Content,
+                Created=blog.Created,
+                Modified=blog.Modified,
+                IsApproved=blog.IsApproved,
+                Author=new UserPayload()
+                {
+                    Id=blog.Author.Id,
+                    Username=blog.Author.Username,
+                    IsAdmin=blog.Author.Role.IsAdmin
+                }
+            });
         }
         else
         {
@@ -86,16 +109,19 @@ public class BlogPostsController : ControllerBase
     [Authorize]
     public async Task<ActionResult> Post([FromBody] BlogPostCreate requestBlogPost)
     {
-        var guid = new Guid(requestBlogPost.UserId);
-        if(_authservice.UserExists(guid).Result==false)
+
+        var userId = _claimsTransformation.GetUserId(HttpContext.User);
+
+        if(userId==Guid.Empty)
         {
-            return Unauthorized();
+            return Unauthorized("Username not found in token.");
         }
 
-        if(guid==Guid.Empty)
+        if(_authservice.UserExists(userId).Result==false)
         {
-            return Unauthorized();
+            return Unauthorized("The user doesn't exist");
         }
+
         if(requestBlogPost==null)
         {
             return BadRequest("The object cannot be null");
@@ -108,7 +134,7 @@ public class BlogPostsController : ControllerBase
         {
             return BadRequest("Content is required");
         }
-        var response = await _userService.Get(guid);
+        var response = await _userService.Get(userId);
         if(!response.Success)
         {
             return NotFound(response.Message);
@@ -153,6 +179,7 @@ public class BlogPostsController : ControllerBase
     [Authorize]
     public async Task<ActionResult> SetApproval(int id, [FromBody] bool approved)
     {
+        var isAdmin = _claimsTransformation.IsAdmin(HttpContext.User);
         var existing = await _blogpostsService.Get(id, false);
         if(existing.Success&&existing.Data is not null)
         {
@@ -180,12 +207,33 @@ public class BlogPostsController : ControllerBase
     [Authorize]
     public async Task<ActionResult> Put(int id, [FromBody] BlogPostUpdate blogPost)
     {
-        var existing = await _blogpostsService.Get(id, false);
-        if(existing.Success)
+        var username = _claimsTransformation.GetUserName(HttpContext.User);
+
+        // Check if the userId is null or empty
+        if(string.IsNullOrEmpty(username))
         {
-            existing.Data.Content=blogPost.Content;
-            existing.Data.Title=blogPost.Title;
-            existing.Data.Modified=DateTime.Now.ToUniversalTime();
+            return Unauthorized("Username not found in token.");
+        }
+        var serviceResponse = await _blogpostsService.Get(id, false);
+        if(serviceResponse.Success&&serviceResponse.Data is BlogPost existingBlog)
+        {
+
+            if(!username.Equals(existingBlog.Author.Username))
+            {
+                return Unauthorized("You are not authorized to update this blog post");
+            }
+            existingBlog.Content=blogPost.Content;
+            existingBlog.Title=blogPost.Title;
+            existingBlog.Modified=DateTime.Now.ToUniversalTime();
+            var data = await _blogpostsService.Update(existingBlog);
+            if(data.Success)
+            {
+                return Ok();
+            }
+            else
+            {
+                return NotFound(data.Message);
+            }
         }
         else
         {
@@ -195,27 +243,34 @@ public class BlogPostsController : ControllerBase
                 return NotFound(author.Message);
             }
             var blogPostNew = new BlogPost(blogPost.Title, blogPost.Content, author.Data);
-            _blogpostsService.Create(blogPostNew);
+            var blogpostCreation = await _blogpostsService.Create(blogPostNew);
+            if(blogpostCreation.Success)
+            {
+                return Ok();
+            }
+            else
+            {
+                return NotFound(blogpostCreation.Message);
+            }
         }
 
-        var data = await _blogpostsService.Update(existing.Data);
-        if(data.Success)
-        {
-            return Ok();
-        }
-        else
-        {
-            return NotFound(data.Message);
-        }
+
 
     }
 
     // DELETE api/<BlogPostsController>/5
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<ActionResult> Delete(int id)
     {
+        var isAdmin = _claimsTransformation.IsAdmin(User);
+        var userName = _claimsTransformation.GetUserName(User);
+        if(userName is null)
+        {
+            return Unauthorized("You are not authorized to perform this action, you must be either the author or an admin");
+        }
         var existing = await _blogpostsService.Get(id);
-        if(existing.Success)
+        if(existing.Data is not null&&(isAdmin||userName.Equals(existing.Data.Author.Username))&&existing.Success)
         {
             await _blogpostsService.Delete(id);
             return Ok();

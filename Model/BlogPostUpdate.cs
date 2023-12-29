@@ -35,7 +35,6 @@ public class BlogPostCreate
     /// Specially formatted content
     /// </summary>
     public required string Content { get; set; }
-    public required string UserId { get; set; }
 }
 
 

@@ -45,17 +45,18 @@ public class AuthService : IAuthservice
 
     public async Task<User?> Verify(string username, string password)
     {
-        var dbUserName = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Username==username);
+        var dbUser = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Username==username);
 
-        if(dbUserName is null)
+        if(dbUser is null)
         {
             return null;
         }
-        var passwordHash = _passwordManager.HashPassword(password, dbUserName.PassSalt);
+        _appDbContext.Entry(dbUser).Reference(u => u.Role).Load();
+        var passwordHash = _passwordManager.HashPassword(password, dbUser.PassSalt);
 
-        var result = Convert.ToBase64String(dbUserName.PassHash).Equals(Convert.ToBase64String(passwordHash));
+        var result = Convert.ToBase64String(dbUser.PassHash).Equals(Convert.ToBase64String(passwordHash));
 
-        return dbUserName;
+        return dbUser;
     }
 
     public async Task<User> RegisterUser(UserPayloadRegistration user)

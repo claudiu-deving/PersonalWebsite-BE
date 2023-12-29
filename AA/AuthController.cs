@@ -5,6 +5,7 @@ using System.Text;
 using ccsflowserver.Model;
 using ccsflowserver.Services;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -24,6 +25,43 @@ public class AuthController : ControllerBase
         _authService=authService;
         _userService=userService;
     }
+
+
+    [HttpGet("role")]
+    [Authorize]
+    public async Task<IActionResult> GetRole()
+    {
+        var user = HttpContext.User;
+        if(user is not null)
+        {
+            var userId = user.Claims.FirstOrDefault(x => x.Type.Equals("id"))?.Value;
+            if(userId is not null)
+            {
+                var idToGuid = Guid.Parse(userId);
+                var existing = await _userService.Get(idToGuid);
+                
+                if(existing.Success&&existing.Data is not null)
+                {
+                    return Ok(new { existing.Data.Role.Name,existing.Data.Username });
+                }
+                else
+                {
+                    return NotFound(existing.Message);
+                }
+            }
+            else
+            {
+                return NotFound("No user with the given id was found");
+            }
+        }
+        else
+        {
+            return Unauthorized("You lack the necessary authorization to perform this task");
+        }
+
+    }
+
+
 
 
     [HttpGet("admin/{username}")]
@@ -82,10 +120,18 @@ public class AuthController : ControllerBase
 
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(ClaimTypes.Role, dbUser.Role.Name),
+            new Claim("id", dbUser.Id.ToString())
+        };
 
         var token = new JwtSecurityToken(
             issuer: _configuration["Jwt:Issuer"],
             audience: _configuration["Jwt:Audience"],
+            claims: claims,
             expires: DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:DurationInMinutes"])),
             signingCredentials: credentials
         );

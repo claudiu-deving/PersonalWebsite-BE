@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Reflection.Metadata;
+using System.Text.RegularExpressions;
 
 using ccsflowserver.Data;
 using ccsflowserver.Model;
@@ -101,20 +102,33 @@ public class BlogPostService : IModelService<BlogPost>
     public async Task<ServiceResponse<BlogPost>> Get(object id, bool parse = true)
     {
         var response = new ServiceResponse<BlogPost>();
-        var data = await _appDbContext.BlogPosts.FindAsync(id);
+        var blog = await _appDbContext.BlogPosts.FindAsync(id);
+        var users = await _appDbContext.Users.ToListAsync();
 
-        if(data is null)
+
+        if(blog is null)
         {
             response.Success=false;
             response.Message=$"Unable to find the blog post with Id: {id}";
-            response.Data=data;
+            response.Data=blog;
         }
         else
         {
-            data.Content=string.Join(Environment.NewLine, data.Content);
+            _appDbContext.Entry(blog).Reference(b => b.Author).Load();
+            var author = users.FirstOrDefault(u => u.Id==blog.AuthorId);
+            if(author!=null)
+            {
+                blog.Author=author;
+                _appDbContext.Entry(author).Reference(b => b.Role).Load();
+            }
+
+
+
+
+            blog.Content=string.Join(Environment.NewLine, blog.Content);
             response.Success=true;
             response.Message=$"Blog post with Id: {id} found";
-            response.Data=data;
+            response.Data=blog;
         }
         return response;
     }
@@ -132,6 +146,8 @@ public class BlogPostService : IModelService<BlogPost>
             if(author!=null)
             {
                 blog.Author=author;
+                _appDbContext.Entry(author).Reference(b => b.Role).Load();
+
             }
         });
         if(data is null)

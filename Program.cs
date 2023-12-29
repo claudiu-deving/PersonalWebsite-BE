@@ -1,5 +1,6 @@
 using System.Text;
 
+using ccsflowserver.Controllers;
 using ccsflowserver.Data;
 using ccsflowserver.Model;
 using ccsflowserver.Services;
@@ -24,6 +25,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 });
 builder.Services.AddScoped<IPasswordManager>(x => new PasswordManager());
+builder.Services.AddScoped<IClaimsTranslator, ClaimsTranslator>();
 builder.Services.AddScoped<IAuthservice>(IAuthservice => new AuthService(IAuthservice.GetRequiredService<AppDbContext>(), IAuthservice.GetRequiredService<IPasswordManager>()));
 builder.Services.AddScoped<IModelService<BlogPost>>(IModelService => new BlogPostService(IModelService.GetRequiredService<AppDbContext>()));
 builder.Services.AddScoped<IModelService<User>>(IModelService => new UserService(IModelService.GetRequiredService<AppDbContext>()));
