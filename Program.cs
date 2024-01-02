@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 
 using ccsflowserver.Controllers;
 using ccsflowserver.Data;
@@ -26,6 +27,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 builder.Services.AddScoped<IPasswordManager>(x => new PasswordManager());
 builder.Services.AddScoped<IClaimsTranslator, ClaimsTranslator>();
+builder.Services.AddScoped<IModelService<TagBlogpostMapping>>(IModelService => new TagBlopostMappingService(IModelService.GetRequiredService<AppDbContext>()));
+builder.Services.AddScoped<IModelService<Tag>>(IModelService => new TagService(IModelService.GetRequiredService<AppDbContext>()));
+builder.Services.AddScoped<IModelService<Category>>(IModelService => new CategoryService(IModelService.GetRequiredService<AppDbContext>()));
 builder.Services.AddScoped<IAuthservice>(IAuthservice => new AuthService(IAuthservice.GetRequiredService<AppDbContext>(), IAuthservice.GetRequiredService<IPasswordManager>()));
 builder.Services.AddScoped<IModelService<BlogPost>>(IModelService => new BlogPostService(IModelService.GetRequiredService<AppDbContext>()));
 builder.Services.AddScoped<IModelService<User>>(IModelService => new UserService(IModelService.GetRequiredService<AppDbContext>()));
@@ -35,15 +39,15 @@ builder.Services.AddControllers();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
       .AddJwtBearer(options =>
       {
-          options.TokenValidationParameters=new TokenValidationParameters
+          options.TokenValidationParameters = new TokenValidationParameters
           {
-              ValidateIssuer=true,
-              ValidateAudience=true,
-              ValidateLifetime=true,
-              ValidateIssuerSigningKey=true,
-              ValidIssuer=config["Jwt:Issuer"],
-              ValidAudience=config["Jwt:Audience"],
-              IssuerSigningKey=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]))
+              ValidateIssuer = true,
+              ValidateAudience = true,
+              ValidateLifetime = true,
+              ValidateIssuerSigningKey = true,
+              ValidIssuer = config["Jwt:Issuer"],
+              ValidAudience = config["Jwt:Audience"],
+              IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]))
           };
       });
 
@@ -62,7 +66,7 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if(app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
@@ -75,7 +79,7 @@ app.UseAuthorization();
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
-    ForwardedHeaders=ForwardedHeaders.XForwardedFor|ForwardedHeaders.XForwardedProto
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 
 app.MapControllers();
@@ -102,16 +106,16 @@ static string BuildConnectionString(WebApplicationBuilder builder)
 };
     string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
 
-    foreach(var str in strings)
+    foreach (var str in strings)
     {
         var env = Environment.GetEnvironmentVariable(str);
-        if(env is null)
+        if (env is null)
         {
             throw new Exception($"Environment variable {str} is not set");
         }
         else
         {
-            connectionString=connectionString.Replace($"[{str}]", env);
+            connectionString = connectionString.Replace($"[{str}]", env);
         }
     }
 

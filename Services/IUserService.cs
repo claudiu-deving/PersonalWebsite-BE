@@ -12,7 +12,7 @@ public class UserService : IModelService<User>
     private readonly AppDbContext _dbContext;
     public UserService(AppDbContext dbContext)
     {
-        _dbContext=dbContext;
+        _dbContext = dbContext;
     }
     public Task<ServiceResponse<User>> Create(User entity)
     {
@@ -23,11 +23,11 @@ public class UserService : IModelService<User>
     {
         ServiceResponse<bool> serviceResponse = new ServiceResponse<bool>();
         var user = _dbContext.Users.Find(id);
-        if(user is null)
+        if (user is null)
         {
-            serviceResponse.Success=true;
-            serviceResponse.Message="User deleted!";
-            serviceResponse.Data=true;
+            serviceResponse.Success = true;
+            serviceResponse.Message = "User deleted!";
+            serviceResponse.Data = true;
         }
         else
         {
@@ -37,23 +37,23 @@ public class UserService : IModelService<User>
         return serviceResponse;
     }
 
-    public async Task<ServiceResponse<User>> Get(object id, bool parse = true)
+    public async Task<ServiceResponse<User>> Get(object id)
     {
         ServiceResponse<User> serviceResponse = new ServiceResponse<User>();
         var user = await _dbContext.Users.FindAsync(id);
 
-        if(user is null)
+        if (user is null)
         {
-            serviceResponse.Success=false;
-            serviceResponse.Message="User not found!";
-            serviceResponse.Data=null;
+            serviceResponse.Success = false;
+            serviceResponse.Message = "User not found!";
+            serviceResponse.Data = null;
         }
         else
         {
             _dbContext.Entry(user).Reference(b => b.Role).Load();
-            serviceResponse.Success=true;
-            serviceResponse.Message="User found!";
-            serviceResponse.Data=user;
+            serviceResponse.Success = true;
+            serviceResponse.Message = "User found!";
+            serviceResponse.Data = user;
         }
         return serviceResponse;
     }
@@ -62,21 +62,21 @@ public class UserService : IModelService<User>
     {
         ServiceResponse<IEnumerable<User>> serviceResponse = new ServiceResponse<IEnumerable<User>>();
         var users = await _dbContext.Users.ToListAsync();
-        foreach(var user in users)
+        foreach (var user in users)
         {
             _dbContext.Entry(user).Reference(b => b.Role).Load();
         }
-        if(users is null)
+        if (users is null)
         {
-            serviceResponse.Success=false;
-            serviceResponse.Message="Users not found!";
-            serviceResponse.Data=null;
+            serviceResponse.Success = false;
+            serviceResponse.Message = "Users not found!";
+            serviceResponse.Data = null;
         }
         else
         {
-            serviceResponse.Success=true;
-            serviceResponse.Message="Users found!";
-            serviceResponse.Data=users;
+            serviceResponse.Success = true;
+            serviceResponse.Message = "Users found!";
+            serviceResponse.Data = users;
         }
         return serviceResponse;
     }
@@ -85,24 +85,24 @@ public class UserService : IModelService<User>
     {
         ServiceResponse<User> serviceResponse = new();
         var dbUser = await _dbContext.Users.FindAsync(entity);
-        if(dbUser is null)
+        if (dbUser is null)
         {
-            serviceResponse.Success=false;
-            serviceResponse.Message="User not found!";
-            serviceResponse.Data=null;
+            serviceResponse.Success = false;
+            serviceResponse.Message = "User not found!";
+            serviceResponse.Data = null;
         }
         else
         {
-            dbUser.PassSalt=entity.PassSalt;
-            dbUser.PassHash=entity.PassHash;
-            dbUser.Username=entity.Username;
-            dbUser.Email=entity.Email;
-            dbUser.Role=entity.Role;
+            dbUser.PassSalt = entity.PassSalt;
+            dbUser.PassHash = entity.PassHash;
+            dbUser.Username = entity.Username;
+            dbUser.Email = entity.Email;
+            dbUser.Role = entity.Role;
             _dbContext.Users.Update(dbUser);
 
-            serviceResponse.Success=true;
-            serviceResponse.Message="User updated!";
-            serviceResponse.Data=dbUser;
+            serviceResponse.Success = true;
+            serviceResponse.Message = "User updated!";
+            serviceResponse.Data = dbUser;
         }
         return serviceResponse;
     }
