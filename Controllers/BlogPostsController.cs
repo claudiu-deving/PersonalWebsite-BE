@@ -347,7 +347,15 @@ public class BlogPostsController : ControllerBase
             {
                 return Unauthorized("You are not authorized to update this blog post");
             }
+
+            var mappings = (await _tagBlogpostMappingService.Get()).Data;
+
+
+            var updatedTagMappings = mappings
+                                        .Where(x => x.BlogpostId == existingBlog.Id && blogPost.Tags
+                                        .Select(y => y.Id).Contains(x.TagId)).ToList();
             existingBlog.Content = blogPost.Content;
+            existingBlog.Tags = updatedTagMappings;
             existingBlog.Title = blogPost.Title;
             existingBlog.Modified = DateTime.Now.ToUniversalTime();
             existingBlog.Category = existingCategories.Data!.FirstOrDefault(cat => cat.Name.Equals(blogPost.Category));

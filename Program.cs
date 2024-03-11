@@ -25,6 +25,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString);
 
 });
+
+
 builder.Services.AddScoped<IPasswordManager>(x => new PasswordManager());
 builder.Services.AddScoped<IClaimsTranslator, ClaimsTranslator>();
 builder.Services.AddScoped<IModelService<TagBlogpostMapping>>(IModelService => new TagBlopostMappingService(IModelService.GetRequiredService<AppDbContext>()));
@@ -64,6 +66,9 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader());
 });
 var app = builder.Build();
+
+ApplyMigrations(app);
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -120,4 +125,10 @@ static string BuildConnectionString(WebApplicationBuilder builder)
     }
 
     return connectionString;
+}
+static void ApplyMigrations(IHost app)
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
 }
