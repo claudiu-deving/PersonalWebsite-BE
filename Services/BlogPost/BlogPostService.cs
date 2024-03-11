@@ -1,7 +1,4 @@
-﻿using System.Reflection.Metadata;
-using System.Text.RegularExpressions;
-
-using ccsflowserver.Data;
+﻿using ccsflowserver.Data;
 using ccsflowserver.Model;
 
 
@@ -27,16 +24,16 @@ public class BlogPostService : IModelService<BlogPost>
 
         await _appDbContext.AddAsync(entity);
         var rowsAffected = await _appDbContext.SaveChangesAsync();
-        if (rowsAffected == 1)
+        if (rowsAffected == 0)
         {
-            response.Success = true;
-            response.Message = $"Blog post  {entity.Title} with Id {entity.Id} created succesfully";
+            response.Success = false;
+            response.Message = $"Unable to create blog post  {entity.Title}";
             response.Data = entity;
         }
         else
         {
-            response.Success = false;
-            response.Message = $"Unable to create blog post  {entity.Title}";
+            response.Success = true;
+            response.Message = $"Blog post  {entity.Title} with Id {entity.Id} created succesfully";
             response.Data = entity;
         }
         return response;
@@ -68,11 +65,6 @@ public class BlogPostService : IModelService<BlogPost>
 
             _appDbContext.BlogPosts.Remove(blogPost);
             var rowsAffected = await _appDbContext.SaveChangesAsync();
-
-            if (rowsAffected > 1)
-            {
-                throw new InvalidOperationException($"Multiple blog posts deleted with id: {id}");
-            }
 
             response.Success = true;
             response.Message = $"Blog post with Id {id} successfully deleted.";
@@ -186,16 +178,16 @@ public class BlogPostService : IModelService<BlogPost>
             data.Modified = DateTime.Now.ToUniversalTime();
 
             var rowsAffected = await _appDbContext.SaveChangesAsync();
-            if (rowsAffected == 1)
+            if (rowsAffected == 0)
             {
-                response.Success = true;
-                response.Message = $"Blog post with Title: {entity.Title} updated succesfully";
+                response.Success = false;
+                response.Message = $"Unable to update blog post with Title: {entity.Title}";
                 response.Data = data;
             }
             else
             {
-                response.Success = false;
-                response.Message = $"Unable to update blog post with Title: {entity.Title}";
+                response.Success = true;
+                response.Message = $"Blog post with Title: {entity.Title} updated succesfully";
                 response.Data = data;
             }
         }
