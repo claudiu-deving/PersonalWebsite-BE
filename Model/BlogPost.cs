@@ -17,6 +17,11 @@ public class BlogPost : IEntity
 
     public bool IsApproved { get; set; }
 
+    public int CategoryId { get; set; }
+    public virtual Category? Category { get; set; }
+
+    public ICollection<TagBlogpostMapping>? Tags { get; set; }
+        
     public BlogPost()
     {
 

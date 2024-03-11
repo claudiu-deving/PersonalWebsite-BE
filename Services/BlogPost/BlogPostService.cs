@@ -15,29 +15,29 @@ public class BlogPostService : IModelService<BlogPost>
 
     public BlogPostService(AppDbContext appDbContext)
     {
-        _appDbContext=appDbContext;
+        _appDbContext = appDbContext;
     }
 
 
     public async Task<ServiceResponse<BlogPost>> Create(BlogPost entity)
     {
         ServiceResponse<BlogPost> response = new ServiceResponse<BlogPost>();
-        entity.Created=DateTime.Now.ToUniversalTime();
-        entity.Modified=DateTime.Now.ToUniversalTime();
+        entity.Created = DateTime.Now.ToUniversalTime();
+        entity.Modified = DateTime.Now.ToUniversalTime();
 
         await _appDbContext.AddAsync(entity);
         var rowsAffected = await _appDbContext.SaveChangesAsync();
-        if(rowsAffected==1)
+        if (rowsAffected == 1)
         {
-            response.Success=true;
-            response.Message=$"Blog post  {entity.Title} with Id {entity.Id} created succesfully";
-            response.Data=entity;
+            response.Success = true;
+            response.Message = $"Blog post  {entity.Title} with Id {entity.Id} created succesfully";
+            response.Data = entity;
         }
         else
         {
-            response.Success=false;
-            response.Message=$"Unable to create blog post  {entity.Title}";
-            response.Data=entity;
+            response.Success = false;
+            response.Message = $"Unable to create blog post  {entity.Title}";
+            response.Data = entity;
         }
         return response;
     }
@@ -47,51 +47,48 @@ public class BlogPostService : IModelService<BlogPost>
         var response = new ServiceResponse<bool>();
 
         // Validate input id
-        if(id==null||!(id is int)||(int)id<0)
+        if (id == null || !(id is int) || (int)id < 0)
         {
-            response.Success=false;
-            response.Message="Invalid ID provided.";
-            response.Data=false;
+            response.Success = false;
+            response.Message = "Invalid ID provided.";
+            response.Data = false;
             return response;
         }
 
         try
         {
-            var blogPost = await _appDbContext.BlogPosts.FirstOrDefaultAsync(b => b.Id==(int)id);
-            if(blogPost is null)
+            var blogPost = await _appDbContext.BlogPosts.FirstOrDefaultAsync(b => b.Id == (int)id);
+            if (blogPost is null)
             {
-                response.Success=true; // Idempotency: the resource already doesn't exist
-                response.Message=$"No blog post found with id: {id}, no action taken.";
-                response.Data=true; // Indicates that the end state is as desired: no such blog post
+                response.Success = true;
+                response.Message = $"No blog post found with id: {id}, no action taken.";
+                response.Data = true;
                 return response;
             }
 
             _appDbContext.BlogPosts.Remove(blogPost);
             var rowsAffected = await _appDbContext.SaveChangesAsync();
 
-            if(rowsAffected>1)
+            if (rowsAffected > 1)
             {
-                // Handle the case where more than one row is affected
                 throw new InvalidOperationException($"Multiple blog posts deleted with id: {id}");
             }
 
-            response.Success=true;
-            response.Message=$"Blog post with Id {id} successfully deleted.";
-            response.Data=true;
+            response.Success = true;
+            response.Message = $"Blog post with Id {id} successfully deleted.";
+            response.Data = true;
         }
-        catch(DbUpdateConcurrencyException ex)
+        catch (DbUpdateConcurrencyException ex)
         {
-            response.Success=false;
-            response.Message="The blog post could not be deleted due to a concurrency issue.";
-            response.Data=false;
-            // Log the exception details for debugging purposes
+            response.Success = false;
+            response.Message = "The blog post could not be deleted due to a concurrency issue.";
+            response.Data = false;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            response.Success=false;
-            response.Message="An error occurred while deleting the blog post.";
-            response.Data=false;
-            // Log the exception details for debugging purposes
+            response.Success = false;
+            response.Message = "An error occurred while deleting the blog post.";
+            response.Data = false;
         }
 
         return response;
@@ -99,36 +96,33 @@ public class BlogPostService : IModelService<BlogPost>
 
 
 
-    public async Task<ServiceResponse<BlogPost>> Get(object id, bool parse = true)
+    public async Task<ServiceResponse<BlogPost>> Get(object id)
     {
         var response = new ServiceResponse<BlogPost>();
         var blog = await _appDbContext.BlogPosts.FindAsync(id);
         var users = await _appDbContext.Users.ToListAsync();
 
 
-        if(blog is null)
+        if (blog is null)
         {
-            response.Success=false;
-            response.Message=$"Unable to find the blog post with Id: {id}";
-            response.Data=blog;
+            response.Success = false;
+            response.Message = $"Unable to find the blog post with Id: {id}";
+            response.Data = blog;
         }
         else
         {
             _appDbContext.Entry(blog).Reference(b => b.Author).Load();
-            var author = users.FirstOrDefault(u => u.Id==blog.AuthorId);
-            if(author!=null)
+            var author = users.FirstOrDefault(u => u.Id == blog.AuthorId);
+            if (author != null)
             {
-                blog.Author=author;
+                blog.Author = author;
                 _appDbContext.Entry(author).Reference(b => b.Role).Load();
             }
 
-
-
-
-            blog.Content=string.Join(Environment.NewLine, blog.Content);
-            response.Success=true;
-            response.Message=$"Blog post with Id: {id} found";
-            response.Data=blog;
+            blog.Content = string.Join(Environment.NewLine, blog.Content);
+            response.Success = true;
+            response.Message = $"Blog post with Id: {id} found";
+            response.Data = blog;
         }
         return response;
     }
@@ -142,29 +136,35 @@ public class BlogPostService : IModelService<BlogPost>
         data.ForEach(blog =>
         {
             _appDbContext.Entry(blog).Reference(b => b.Author).Load();
-            var author = users.FirstOrDefault(u => u.Id==blog.AuthorId);
-            if(author!=null)
-            {
-                blog.Author=author;
-                _appDbContext.Entry(author).Reference(b => b.Role).Load();
+            _appDbContext.Entry(blog).Reference(b => b.Category).Load();
 
+            _appDbContext.Entry(blog).Collection(b => b.Tags).Load();
+            foreach (var tag in blog.Tags!)
+            {
+                _appDbContext.Entry(tag).Reference(b => b.Tag).Load();
+            }
+            var author = users.FirstOrDefault(u => u.Id == blog.AuthorId);
+            if (author != null)
+            {
+                blog.Author = author;
+                _appDbContext.Entry(author).Reference(b => b.Role).Load();
             }
         });
-        if(data is null)
+        if (data is null)
         {
-            response.Success=false;
-            response.Message=$"Unable to retrieve the blog posts";
-            response.Data=data;
+            response.Success = false;
+            response.Message = $"Unable to retrieve the blog posts";
+            response.Data = data;
         }
         else
         {
             data.ForEach(blog =>
             {
-                blog.Content=string.Join(Environment.NewLine, blog.Content);
+                blog.Content = string.Join(Environment.NewLine, blog.Content);
             });
-            response.Success=true;
-            response.Message=$"Blog posts retrieved";
-            response.Data=data;
+            response.Success = true;
+            response.Message = $"Blog posts retrieved";
+            response.Data = data;
         }
         return response;
     }
@@ -173,30 +173,30 @@ public class BlogPostService : IModelService<BlogPost>
     {
         var response = new ServiceResponse<BlogPost>();
         var data = await _appDbContext.BlogPosts.FindAsync(entity.Id);
-        if(data is null)
+        if (data is null)
         {
-            response.Success=false;
-            response.Message=$"Unable to find the blog post with Title: {entity.Title}";
-            response.Data=data;
+            response.Success = false;
+            response.Message = $"Unable to find the blog post with Title: {entity.Title}";
+            response.Data = data;
         }
         else
         {
-            data.Title=entity.Title;
-            data.Content=entity.Content;
-            data.Modified=DateTime.Now.ToUniversalTime();
+            data.Title = entity.Title;
+            data.Content = entity.Content;
+            data.Modified = DateTime.Now.ToUniversalTime();
 
             var rowsAffected = await _appDbContext.SaveChangesAsync();
-            if(rowsAffected==1)
+            if (rowsAffected == 1)
             {
-                response.Success=true;
-                response.Message=$"Blog post with Title: {entity.Title} updated succesfully";
-                response.Data=data;
+                response.Success = true;
+                response.Message = $"Blog post with Title: {entity.Title} updated succesfully";
+                response.Data = data;
             }
             else
             {
-                response.Success=false;
-                response.Message=$"Unable to update blog post with Title: {entity.Title}";
-                response.Data=data;
+                response.Success = false;
+                response.Message = $"Unable to update blog post with Title: {entity.Title}";
+                response.Data = data;
             }
         }
         return response;

@@ -22,19 +22,10 @@ public class BlogPostUpdate
     public DateTime? Modified { get; set; }
     public UserPayload? Author { get; set; }
     public bool IsApproved { get; set; }
-}
 
-public class BlogPostCreate
-{
-    /// <summary>
-    /// Title of the blog
-    /// </summary>
-    public required string Title { get; set; }
+    public IEnumerable<TagDTO>? Tags { get; set; }
 
-    /// <summary>
-    /// Specially formatted content
-    /// </summary>
-    public required string Content { get; set; }
+    public string? Category { get; set; }
 }
 
 
