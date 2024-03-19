@@ -35,19 +35,19 @@ builder.Services.AddScoped<IModelService<BlogPost>>(IModelService => new BlogPos
 builder.Services.AddScoped<IModelService<User>>(IModelService => new UserService(IModelService.GetRequiredService<AppDbContext>()));
 
 builder.Services.AddControllers();
-
+var jtwKey = Environment.GetEnvironmentVariable("JWT_KEY");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
       .AddJwtBearer(options =>
       {
           options.TokenValidationParameters = new TokenValidationParameters
           {
-              ValidateIssuer = true,
-              ValidateAudience = true,
-              ValidateLifetime = true,
-              ValidateIssuerSigningKey = true,
-              ValidIssuer = config["Jwt:Issuer"],
-              ValidAudience = config["Jwt:Audience"],
-              IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]))
+              ValidateIssuer=true,
+              ValidateAudience=true,
+              ValidateLifetime=true,
+              ValidateIssuerSigningKey=true,
+              ValidIssuer=config["Jwt:Issuer"],
+              ValidAudience=config["Jwt:Audience"],
+              IssuerSigningKey=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jtwKey))
           };
       });
 
