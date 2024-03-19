@@ -39,9 +39,6 @@ internal record <3class3>BlogPost
 }
 </code>
 
-Aici eu o iubesc pe Diana <3
-
-BB
 <code>
 public static class Program
 {
@@ -52,8 +49,6 @@ public static class Program
 }
 </code>
 
-asdsad
-sd
 <code>
 public static class Program
 {
@@ -63,5 +58,3 @@ public static class Program
 	}
 }
 </code>
-
-Baby >:D<
