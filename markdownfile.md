@@ -38,7 +38,6 @@ internal record <3class3>BlogPost
     }
 }
 </code>
-
 <code>
 public static class Program
 {
