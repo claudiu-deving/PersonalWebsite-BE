@@ -48,8 +48,6 @@ public static class Program
 }
 </code>
 
-asdsad
-sd
 <code>
 public static class Program
 {

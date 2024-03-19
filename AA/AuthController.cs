@@ -21,9 +21,9 @@ public class AuthController : ControllerBase
 
     public AuthController(IConfiguration configuration, IAuthservice authService, IModelService<User> userService)
     {
-        _configuration=configuration;
-        _authService=authService;
-        _userService=userService;
+        _configuration = configuration;
+        _authService = authService;
+        _userService = userService;
     }
 
 
@@ -32,31 +32,24 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> GetRole()
     {
         var user = HttpContext.User;
-        if(user is not null)
+        var userId = user.Claims.FirstOrDefault(x => x.Type.Equals("id"))?.Value;
+        if (userId is not null)
         {
-            var userId = user.Claims.FirstOrDefault(x => x.Type.Equals("id"))?.Value;
-            if(userId is not null)
+            var idToGuid = Guid.Parse(userId);
+            var existing = await _userService.Get(idToGuid);
+
+            if (existing.Success && existing.Data is not null)
             {
-                var idToGuid = Guid.Parse(userId);
-                var existing = await _userService.Get(idToGuid);
-                
-                if(existing.Success&&existing.Data is not null)
-                {
-                    return Ok(new { existing.Data.Role.Name,existing.Data.Username });
-                }
-                else
-                {
-                    return NotFound(existing.Message);
-                }
+                return Ok(new { existing.Data.Role.Name, existing.Data.Username });
             }
             else
             {
-                return NotFound("No user with the given id was found");
+                return NotFound(existing.Message);
             }
         }
         else
         {
-            return Unauthorized("You lack the necessary authorization to perform this task");
+            return NotFound("No user with the given id was found");
         }
 
     }
@@ -68,10 +61,10 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> IsAdmin(string username)
     {
         var data = await _userService.Get();
-        if(data.Success&&data.Data is not null)
+        if (data.Success && data.Data is not null)
         {
             var user = data.Data.FirstOrDefault(x => x.Username.Equals(username));
-            if(user is null)
+            if (user is null)
             {
                 return NotFound("User not found");
             }
@@ -89,10 +82,10 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Get(string username)
     {
         var data = await _userService.Get();
-        if(data.Success&&data.Data is not null)
+        if (data.Success && data.Data is not null)
         {
             var user = data.Data.FirstOrDefault(x => x.Username.Equals(username));
-            if(user is null)
+            if (user is null)
             {
                 return NotFound("User not found");
             }
@@ -108,17 +101,18 @@ public class AuthController : ControllerBase
     [HttpPost("token")]
     public async Task<IActionResult> GenerateToken(UserPayloadVerification user)
     {
-        if(UserExceedesRetriesLimit(user))
+        if (UserExceedesRetriesLimit(user))
         {
             return Forbid();
         }
         var dbUser = await _authService.Verify(user.Username, user.Password);
-        if(dbUser is null)
+        if (dbUser is null)
         {
             return Unauthorized();
         }
 
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+        var jtwKey = Environment.GetEnvironmentVariable("JWT_KEY");
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jtwKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         var claims = new List<Claim>
         {
@@ -149,15 +143,15 @@ public class AuthController : ControllerBase
     {
         var valueRetrieved = _lastTry.TryGetValue(user.Username, out var listOfDates);
 
-        if(valueRetrieved)
+        if (valueRetrieved)
         {
             listOfDates!.Add(DateTime.Now);
 
             listOfDates.Sort();
 
-            if(listOfDates.Count==5)
+            if (listOfDates.Count == 5)
             {
-                if((listOfDates[0]-listOfDates[listOfDates.Count-1]).Duration()<TimeSpan.FromMinutes(5).Duration())
+                if ((listOfDates[0] - listOfDates[listOfDates.Count - 1]).Duration() < TimeSpan.FromMinutes(5).Duration())
                 {
                     Console.WriteLine($"User {user.Username} tried to login more than 5 times");
                     listOfDates.RemoveAt(0);
@@ -166,13 +160,13 @@ public class AuthController : ControllerBase
                 listOfDates.RemoveAt(0);
             }
 
-            _lastTry[user.Username]=listOfDates;
+            _lastTry[user.Username] = listOfDates;
             return false;
         }
         else
         {
-            listOfDates=new List<DateTime>();
-            _lastTry[user.Username]=listOfDates;
+            listOfDates = new List<DateTime>();
+            _lastTry[user.Username] = listOfDates;
             return false;
         }
     }
@@ -180,15 +174,15 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> RegisterUser(UserPayloadRegistration user)
     {
-        if(string.IsNullOrEmpty(user.Username)||string.IsNullOrEmpty(user.Password))
+        if (string.IsNullOrEmpty(user.Username) || string.IsNullOrEmpty(user.Password))
             return BadRequest("Username or password is missing");
 
-        if(await _authService.UserExists(user.Username))
+        if (await _authService.UserExists(user.Username))
         {
             return BadRequest("Username already exists");
         }
 
-        if(await _authService.EmailExists(user.Email))
+        if (await _authService.EmailExists(user.Email))
         {
             return BadRequest("Email already exists");
         }
