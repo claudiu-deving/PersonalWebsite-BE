@@ -21,7 +21,7 @@ public class UserService : IModelService<User>
 
     public async Task<ServiceResponse<bool>> Delete(object id)
     {
-        ServiceResponse<bool> serviceResponse = new ServiceResponse<bool>();
+        ServiceResponse<bool> serviceResponse = new();
         var user = _dbContext.Users.Find(id);
         if (user is null)
         {
@@ -39,7 +39,7 @@ public class UserService : IModelService<User>
 
     public async Task<ServiceResponse<User>> Get(object id)
     {
-        ServiceResponse<User> serviceResponse = new ServiceResponse<User>();
+        ServiceResponse<User> serviceResponse = new();
         var user = await _dbContext.Users.FindAsync(id);
 
         if (user is null)
@@ -60,7 +60,7 @@ public class UserService : IModelService<User>
 
     public async Task<ServiceResponse<IEnumerable<User>>> Get()
     {
-        ServiceResponse<IEnumerable<User>> serviceResponse = new ServiceResponse<IEnumerable<User>>();
+        ServiceResponse<IEnumerable<User>> serviceResponse = new();
         var users = await _dbContext.Users.ToListAsync();
         foreach (var user in users)
         {

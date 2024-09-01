@@ -101,8 +101,8 @@ static string BuildConnectionString(WebApplicationBuilder builder)
 	const string _databaseUser = "DATABASE_USER_PW";
 	const string _databasePassword = "DATABASE_PASS_PW";
 
-	List<string> strings = new List<string>
-{
+	List<string> strings = new()
+	{
 	_databaseHost,
 	_databaseName,
 	_databaseUser,

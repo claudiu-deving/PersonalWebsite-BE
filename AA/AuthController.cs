@@ -37,7 +37,7 @@ public class AuthController : ControllerBase
 
 			if (existing.Success && existing.Data is not null)
 			{
-				return Ok(new { existing.Data.Role.Name, existing.Data.Username });
+				return Ok(new { existing.Data.Role.Name, existing.Data.Username, existing.Data.Email });
 			}
 			else
 			{
@@ -109,14 +109,19 @@ public class AuthController : ControllerBase
 		}
 
 		var jtwKey = Environment.GetEnvironmentVariable("JWT_KEY");
+		if (string.IsNullOrEmpty(jtwKey))
+		{
+			Console.WriteLine("No environment variable found at: JWT_KEY");
+			return StatusCode(500);
+		}
 		var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jtwKey));
 		var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 		var claims = new List<Claim>
 		{
-			new Claim(ClaimTypes.Name, user.Username),
-			new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-			new Claim(ClaimTypes.Role, dbUser.Role.Name),
-			new Claim("id", dbUser.Id.ToString())
+			new(ClaimTypes.Name, user.Username),
+			new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+			new(ClaimTypes.Role, dbUser.Role.Name),
+			new("id", dbUser.Id.ToString())
 		};
 
 		var token = new JwtSecurityToken(
@@ -135,7 +140,7 @@ public class AuthController : ControllerBase
 		});
 	}
 
-	private static Dictionary<string, List<DateTime>> _lastTry = new Dictionary<string, List<DateTime>>();
+	private static Dictionary<string, List<DateTime>> _lastTry = new();
 	private bool UserExceedesRetriesLimit(UserPayloadVerification user)
 	{
 		var valueRetrieved = _lastTry.TryGetValue(user.Username, out var listOfDates);
