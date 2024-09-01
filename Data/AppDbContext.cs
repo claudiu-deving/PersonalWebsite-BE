@@ -11,12 +11,12 @@ public class AppDbContext : DbContext
 		if (Database.GetPendingMigrations().Any())
 			Database.Migrate();
 	}
-
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		modelBuilder.Entity<Category>().HasData(new Category() { Name = "Default", Description = "Default Category", Id = -1 });
 		modelBuilder.Entity<Role>().HasData(new Role() { Name = "Author", Description = "Basic logged in user", IsAdmin = false, Id = -1 },
 		new Role() { Name = "Admin", Description = "The bo$$", IsAdmin = true, Id = -2 });
+
 
 		base.OnModelCreating(modelBuilder);
 	}
