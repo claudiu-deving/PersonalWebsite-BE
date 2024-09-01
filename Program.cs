@@ -22,7 +22,7 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseNpgsql(connectionString);
+	options.UseNpgsql(connectionString);
 
 });
 
@@ -38,20 +38,24 @@ builder.Services.AddScoped<IModelService<User>>(IModelService => new UserService
 
 builder.Services.AddControllers();
 var jtwKey = Environment.GetEnvironmentVariable("JWT_KEY");
+if (jtwKey == null)
+{
+	throw new ArgumentNullException(nameof(jtwKey), "Provide a json web token key as env variable");
+}
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-      .AddJwtBearer(options =>
-      {
-          options.TokenValidationParameters = new TokenValidationParameters
-          {
-              ValidateIssuer=true,
-              ValidateAudience=true,
-              ValidateLifetime=true,
-              ValidateIssuerSigningKey=true,
-              ValidIssuer=config["Jwt:Issuer"],
-              ValidAudience=config["Jwt:Audience"],
-              IssuerSigningKey=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jtwKey))
-          };
-      });
+	  .AddJwtBearer(options =>
+	  {
+		  options.TokenValidationParameters = new TokenValidationParameters
+		  {
+			  ValidateIssuer = true,
+			  ValidateAudience = true,
+			  ValidateLifetime = true,
+			  ValidateIssuerSigningKey = true,
+			  ValidIssuer = config["Jwt:Issuer"],
+			  ValidAudience = config["Jwt:Audience"],
+			  IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jtwKey))
+		  };
+	  });
 
 builder.Services.AddAuthorization();
 
@@ -59,11 +63,11 @@ builder.Services.AddAuthorization();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CorsPolicy",
-        builder => builder
-            .AllowAnyMethod()
-            .AllowAnyOrigin()
-            .AllowAnyHeader());
+	options.AddPolicy("CorsPolicy",
+		builder => builder
+			.AllowAnyMethod()
+			.AllowAnyOrigin()
+			.AllowAnyHeader());
 });
 var app = builder.Build();
 
@@ -73,8 +77,8 @@ ApplyMigrations(app);
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+	app.UseSwagger();
+	app.UseSwaggerUI();
 }
 app.UseCors("CorsPolicy");
 
@@ -84,7 +88,7 @@ app.UseAuthorization();
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+	ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 
 app.MapControllers();
@@ -97,38 +101,32 @@ app.Run();
 
 static string BuildConnectionString(WebApplicationBuilder builder)
 {
-    const string _databaseHost = "DATABASE_HOST_PW";
-    const string _databaseName = "DATABASE_PW";
-    const string _databaseUser = "DATABASE_USER_PW";
-    const string _databasePassword = "DATABASE_PASS_PW";
+	const string _databaseHost = "DATABASE_HOST_PW";
+	const string _databaseName = "DATABASE_PW";
+	const string _databaseUser = "DATABASE_USER_PW";
+	const string _databasePassword = "DATABASE_PASS_PW";
 
-    List<string> strings = new List<string>
-{
-    _databaseHost,
-    _databaseName,
-    _databaseUser,
-    _databasePassword
+	List<string> strings = new()
+	{
+	_databaseHost,
+	_databaseName,
+	_databaseUser,
+	_databasePassword
 };
-    string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
+	string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
 
-    foreach (var str in strings)
-    {
-        var env = Environment.GetEnvironmentVariable(str);
-        if (env is null)
-        {
-            throw new Exception($"Environment variable {str} is not set");
-        }
-        else
-        {
-            connectionString = connectionString.Replace($"[{str}]", env);
-        }
-    }
+	foreach (var str in strings)
+	{
+		var env = Environment.GetEnvironmentVariable(str);
+		if (env is null)
+		{
+			throw new Exception($"Environment variable {str} is not set");
+		}
+		else
+		{
+			connectionString = connectionString.Replace($"[{str}]", env);
+		}
+	}
 
-    return connectionString;
-}
-static void ApplyMigrations(IHost app)
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
+	return connectionString;
 }
