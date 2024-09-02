@@ -1,5 +1,6 @@
 ﻿using ccsflowserver.Model;
 using ccsflowserver.Services;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -192,5 +193,36 @@ public class AuthController : ControllerBase
 		var userResponse = await _authService.RegisterUser(user);
 
 		return Ok(userResponse);
+	}
+
+	[HttpPost("google/callback")]
+	public async Task<IActionResult> LoginWithGoogle([FromBody] string credentials)
+	{
+		var googleId = Environment.GetEnvironmentVariable("GOOGLE_ID");
+		if (string.IsNullOrEmpty(googleId)) return StatusCode(500, "The server is not set up correctly");
+		var settings = new GoogleJsonWebSignature.ValidationSettings()
+		{
+			Audience = [googleId]
+		};
+
+		var payload = await GoogleJsonWebSignature.ValidateAsync(credentials, settings);
+
+		var users = await _userService.Get();
+		if (users.Success)
+		{
+			var user = users.Data!.FirstOrDefault(x => x.Email == payload.Email);
+			if (user != null)
+			{
+				return Ok(user);
+			}
+			else
+			{
+				return BadRequest();
+			}
+		}
+		else
+		{
+			return BadRequest();
+		}
 	}
 }

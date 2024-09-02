@@ -43,13 +43,15 @@ namespace ccsflowserver.Controllers
 				{
 					From = new MailAddress(model.SenderEmail, model.SenderName),
 					Subject = model.Subject,
-					Body = model.Message,
-					IsBodyHtml = false,
-					Sender = new MailAddress(model.SenderEmail, model.SenderName)
+					Body = $@"<p>You have received a message on bitluz.com from:{model.SenderName} </p><h3><a href=""{model.SenderEmail}""></a></h3><p> with the message:<p>
+							<div>{model.Message}</div>",
+					IsBodyHtml = true,
+					Sender = new MailAddress(model.SenderEmail, model.SenderName),
+
 				};
 
 				mailMessage.To.Add(recipientEmail);
-				mailMessage.Headers.Add("Reply-To", $"{model.SenderEmail}");
+				mailMessage.ReplyToList.Add(model.SenderEmail);
 				smtpClient.Send(mailMessage);
 
 				return StatusCode(200, "Email sent successfully");
