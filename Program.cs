@@ -59,7 +59,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
 {

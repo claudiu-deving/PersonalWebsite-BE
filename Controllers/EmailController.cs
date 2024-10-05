@@ -43,7 +43,7 @@ namespace ccsflowserver.Controllers
 				{
 					From = new MailAddress(model.SenderEmail, model.SenderName),
 					Subject = model.Subject,
-					Body = $@"<p>You have received a message on bitluz.com from:{model.SenderName} </p><h3><a href=""{model.SenderEmail}""></a></h3><p> with the message:<p>
+					Body = $@"<p>You have received a message on bitluz.com from:{model.SenderName} </p><h3><a href=""{model.SenderEmail}""></a></h3><p> With the message:<p>
 							<div>{model.Message}</div>",
 					IsBodyHtml = true,
 					Sender = new MailAddress(model.SenderEmail, model.SenderName),
