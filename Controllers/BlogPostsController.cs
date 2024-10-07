@@ -136,7 +136,8 @@ public class BlogPostsController : ControllerBase
 							IsAdmin = blog.Author.Role.IsAdmin
 						},
 						Tags = blogTags,
-						Category = blog.Category.Name
+						Category = blog.Category.Name,
+						HeroImagePath = blog.HeroImagePath
 					});
 
 				}
