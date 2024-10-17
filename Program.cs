@@ -35,6 +35,7 @@ builder.Services.AddScoped<IModelService<Category>>(IModelService => new Categor
 builder.Services.AddScoped<IAuthservice>(IAuthservice => new AuthService(IAuthservice.GetRequiredService<AppDbContext>(), IAuthservice.GetRequiredService<IPasswordManager>()));
 builder.Services.AddScoped<IModelService<BlogPost>>(IModelService => new BlogPostService(IModelService.GetRequiredService<AppDbContext>()));
 builder.Services.AddScoped<IModelService<User>>(IModelService => new UserService(IModelService.GetRequiredService<AppDbContext>()));
+builder.Services.AddScoped<SlugCreator>();
 
 builder.Services.AddControllers();
 var jtwKey = Environment.GetEnvironmentVariable("JWT_KEY");

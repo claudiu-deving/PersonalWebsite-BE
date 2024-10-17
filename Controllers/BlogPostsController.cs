@@ -1,19 +1,13 @@
-using System.Reflection.Metadata;
-using System.Security.Claims;
-using System.Threading.Tasks;
-
-using AutoMapper;
-
 using ccsflowserver.Model;
 using ccsflowserver.Services;
-
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace ccsflowserver.Controllers;
+
+
 [Route("api/[controller]")]
 [ApiController]
 public class BlogPostsController : ControllerBase
@@ -25,6 +19,7 @@ public class BlogPostsController : ControllerBase
 	private readonly IModelService<Category> _categoryService;
 	private readonly IModelService<Tag> _tagService;
 	private readonly IModelService<TagBlogpostMapping> _tagBlogpostMappingService;
+	private readonly SlugCreator _slugCreator;
 
 	public BlogPostsController(
 		IModelService<BlogPost> blogpostsService,
@@ -33,7 +28,8 @@ public class BlogPostsController : ControllerBase
 		IClaimsTranslator claimsTransformation,
 		IModelService<Category> categoryService,
 		IModelService<Tag> tagService,
-		IModelService<TagBlogpostMapping> tagBlogpostMappingService)
+		IModelService<TagBlogpostMapping> tagBlogpostMappingService,
+		SlugCreator slugCreator)
 	{
 		_blogpostsService = blogpostsService;
 		_authservice = authservice;
@@ -42,6 +38,7 @@ public class BlogPostsController : ControllerBase
 		_categoryService = categoryService;
 		_tagService = tagService;
 		_tagBlogpostMappingService = tagBlogpostMappingService;
+		_slugCreator = slugCreator;
 	}
 
 	[HttpGet("category/{category}")]
@@ -58,35 +55,7 @@ public class BlogPostsController : ControllerBase
 			}
 
 			var filtered = serviceResponse.Data.Where(x => x.Category.Name.Equals(category)).Select(
-				blog =>
-				{
-					var blogTags = blog.Tags?.Select(x =>
-					{
-						var tag = _tagService.Get(x.TagId).Result.Data;
-
-						return new TagDTO(tag.Id, tag.Name, tag.Color, tag.Description, tag.Blogs.Count);
-					});
-
-					return new BlogPostUpdate()
-					{
-						Id = blog.Id,
-						Title = blog.Title,
-						Content = blog.Content,
-						Created = blog.Created,
-						Modified = blog.Modified,
-						IsApproved = blog.IsApproved,
-						Author = new UserPayload()
-						{
-							Id = blog.Author.Id,
-							Username = blog.Author.Username,
-							IsAdmin = blog.Author.Role.IsAdmin
-						},
-						Tags = blogTags,
-						Category = blog.Category.Name
-
-					};
-
-				});
+				MapToDto);
 
 			if (filtered is null)
 			{
@@ -98,6 +67,37 @@ public class BlogPostsController : ControllerBase
 		{
 			return BadRequest(ex.Message);
 		}
+	}
+
+	private BlogPostUpdate MapToDto(BlogPost blog)
+	{
+		var blogTags = blog.Tags?.Select(x =>
+		{
+			var tag = _tagService.Get(x.TagId).Result.Data;
+
+
+			return new TagDTO(tag.Id, tag.Name, tag.Color, tag.Description, tag.Blogs.Count);
+		});
+
+		return new BlogPostUpdate()
+		{
+			Id = blog.Id,
+			Title = blog.Title,
+			Slug = blog.Slug,
+			Content = blog.Content,
+			Created = blog.Created,
+			Modified = blog.Modified,
+			IsApproved = blog.IsApproved,
+			Author = new UserPayload()
+			{
+				Id = blog.Author.Id,
+				Username = blog.Author.Username,
+				IsAdmin = blog.Author.Role.IsAdmin
+			},
+			Tags = blogTags,
+			Category = blog.Category?.Name
+
+		};
 	}
 
 	// GET: api/<BlogPostsController>
@@ -114,31 +114,7 @@ public class BlogPostsController : ControllerBase
 			{
 				foreach (var blog in data.Data)
 				{
-					var blogTags = blog.Tags?.Select(x =>
-					{
-						var tag = _tagService.Get(x.TagId).Result.Data;
-
-						return new TagDTO(tag.Id, tag.Name, tag.Color, tag.Description, tag.Blogs.Count);
-					});
-
-					blogs.Add(new BlogPostUpdate()
-					{
-						Id = blog.Id,
-						Title = blog.Title,
-						Content = blog.Content,
-						Created = blog.Created,
-						Modified = blog.Modified,
-						IsApproved = blog.IsApproved,
-						Author = new UserPayload()
-						{
-							Id = blog.Author.Id,
-							Username = blog.Author.Username,
-							IsAdmin = blog.Author.Role.IsAdmin
-						},
-						Tags = blogTags,
-						Category = blog.Category.Name,
-						HeroImagePath = blog.HeroImagePath
-					});
+					blogs.Add(MapToDto(blog));
 
 				}
 				return Ok(blogs);
@@ -166,28 +142,7 @@ public class BlogPostsController : ControllerBase
 		if (data.Success && data.Data is BlogPost blog)
 		{
 
-			var blogTags = blog.Tags?.Select(x =>
-			{
-				var tag = _tagService.Get(x.TagId).Result.Data;
-
-				return new TagDTO(tag.Id, tag.Name, tag.Color, tag.Description, tag.Blogs.Count);
-			});
-			return Ok(new BlogPostUpdate()
-			{
-				Id = blog.Id,
-				Title = blog.Title,
-				Content = blog.Content,
-				Created = blog.Created,
-				Modified = blog.Modified,
-				IsApproved = blog.IsApproved,
-				Author = new UserPayload()
-				{
-					Id = blog.Author.Id,
-					Username = blog.Author.Username,
-					IsAdmin = blog.Author.Role.IsAdmin
-				},
-				Tags = blogTags
-			});
+			return Ok(MapToDto(blog));
 		}
 		else
 		{
@@ -247,13 +202,15 @@ public class BlogPostsController : ControllerBase
 			return NotFound(response.Message);
 		}
 
+		var slug = await _slugCreator.CreateSlug(requestBlogPost.Title);
 
 
 
 		var author = response.Data;
 		BlogPost blogPost = new(requestBlogPost.Title, requestBlogPost.Content, author)
 		{
-			Category = existingCategories.Data!.FirstOrDefault(cat => cat.Name.Equals(requestBlogPost.Category))
+			Category = existingCategories.Data!.FirstOrDefault(cat => cat.Name.Equals(requestBlogPost.Category)),
+			Slug = slug,
 		};
 
 
@@ -278,6 +235,7 @@ public class BlogPostsController : ControllerBase
 		{
 			Title = data.Data.Title,
 			Content = data.Data.Content,
+			Slug = slug,
 			Author = new UserPayload()
 			{
 				Username = data.Data.Author.Username,
@@ -336,7 +294,7 @@ public class BlogPostsController : ControllerBase
 		var existingCategories = await _categoryService.Get();
 		if (existingCategories.Success && !existingCategories.Data!.Select(cat => cat.Name).Contains(blogPost.Category))
 		{
-			return BadRequest("The category doesn't exist");
+			await _categoryService.Create(new Category() { Name = blogPost.Category, Description = blogPost.Category });
 		}
 
 		// Check if the userId is null or empty

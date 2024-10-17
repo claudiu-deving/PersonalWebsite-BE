@@ -15,6 +15,8 @@ public class BlogPost : IEntity
 	public Guid AuthorId { get; set; }
 	public virtual User Author { get; set; }
 	public string HeroImagePath { get; set; } = string.Empty;
+
+	public string Slug { get; set; } = string.Empty;
 	public bool IsApproved { get; set; }
 
 	public int CategoryId { get; set; }

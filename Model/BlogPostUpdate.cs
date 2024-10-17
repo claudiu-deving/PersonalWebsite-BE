@@ -28,6 +28,7 @@ public class BlogPostUpdate
 	public string? Category { get; set; }
 
 	public string HeroImagePath { get; set; } = string.Empty;
+	public string Slug { get; internal set; } = string.Empty;
 }
 
 
